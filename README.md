@@ -1,35 +1,90 @@
-# jtt
-Justin's Transcription Tool. A shitty tool to do voice to text for llms running locally. 
+# JTT - Justin's Transcription Tool
 
-## usage
-1. hold [ and ] at the same time, let go when done talking. it will paste at your cursor when its done processing
-2. run `jtt start` and `jtt stop`. transcription will be pasted to clipboard
+A macOS menu bar app for voice-to-text transcription using whisper-cpp, with optional LLM cleaning via Ollama.
 
-## Prereqs  
-1. install whisper `brew install whisper-cpp` (the inference engine)
-2. download whisper model (the actual weights):
-   ```bash
-   mkdir -p ~/.local/share/jtt
-   curl -L -o ~/.local/share/jtt/ggml-small.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin
-   ```
-   (or use `ggml-base.en.bin` for faster speed, `ggml-tiny.en.bin` for fastest)
-3. install sox `brew install sox` (command-line audio lib)
-4. install ollama `brew install ollama` (npm / pip for models)
-4.5 get ollama runnin in the bg `brew services start ollama` (using homebrew to manage lifecycle)
-5. install a model `ollama pull llama3.2:3b` (i'm using a smaller model)
-6. install a hotkey lib / write your own `brew install --cask hammerspoon`
-7. open hammerspoon and give it permissions for accessibility 
-8. double click the .spoon file to install 
-9. add the following the the config `hs.loadSpoon("JTT")` and reload the hammerspoon config
-10. enjoy
+## Features
 
-## Install
-`pipx install . --force` 
+- **Menu bar app** - Lives in your menu bar, always ready
+- **Voice transcription** - Uses whisper-cpp for fast local transcription
+- **LLM cleaning** (optional) - Cleans up transcripts using Ollama (removes filler words, fixes punctuation)
+- **Clipboard integration** - Transcribed text is automatically copied to clipboard
+- **Settings UI** - Configure whisper model, Ollama settings, and more
 
+## Installation
 
-## TODOS
-- add a menu bar status icon / settings page (tauri / wails maybe? )
-- bug where bracket shows up
-- ability to disable ollama (just use whisper). latency is kinda bad right now. 
-- config file to point at different models 
-- remove hammerspoon dependency 
+### Prerequisites
+
+```bash
+# Install sox (audio recording)
+brew install sox
+
+# Install whisper-cpp (transcription)
+brew install whisper-cpp
+
+# Optional: Install Ollama (LLM text cleaning)
+brew install ollama
+brew services start ollama
+ollama pull llama3.2:3b
+```
+
+### Download Whisper Model
+
+On first launch, open Settings and download a whisper model:
+
+| Model | Size | Speed | Quality |
+|-------|------|-------|---------|
+| tiny.en | 75MB | Fastest | Basic |
+| base.en | 142MB | Fast | Good |
+| small.en | 466MB | Medium | Better |
+| medium.en | 1.5GB | Slow | Great |
+| large | 3GB | Slowest | Best |
+
+### Build from Source
+
+```bash
+# Install Wails v3 CLI
+go install github.com/wailsapp/wails/v3/cmd/wails3@latest
+
+# Development (hot reload)
+wails3 dev
+
+# Build for production
+wails3 build
+
+# Run
+./bin/jtt
+```
+
+## Usage
+
+1. Click the microphone icon in the menu bar
+2. Select "Start Recording" and speak
+3. Select "Stop Recording" when done
+4. Transcription is copied to your clipboard - paste anywhere!
+
+### Settings
+
+Click the menu bar icon → Settings to configure:
+- **Whisper Model** - Download and select transcription model
+- **Ollama** - Enable/disable LLM text cleaning, select model
+
+## Architecture
+
+- **Backend**: Go with Wails v3 (alpha)
+- **Frontend**: React + TypeScript + Vite
+- **Audio**: sox (`rec` command)
+- **Transcription**: whisper-cpp (`whisper-cli` command)
+- **LLM**: Ollama HTTP API (localhost:11434)
+
+## Config
+
+Settings stored in `~/.config/jtt/config.json`
+
+## Known Issues
+
+- Global hotkey not yet implemented (use menu bar for now)
+- Wails v3 is in alpha - some features may be unstable
+
+## License
+
+MIT

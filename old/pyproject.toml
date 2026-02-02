@@ -1,0 +1,13 @@
+[project]
+name = "jtt"
+version = "0.1.0"
+description = "Voice-to-text CLI using whisper-cpp and ollama"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+jtt = "jtt:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

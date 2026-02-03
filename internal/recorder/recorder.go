@@ -38,43 +38,59 @@ func listMicrophonesFromSystemProfiler() ([]Microphone, error) {
 
 	var mics []Microphone
 	scanner := bufio.NewScanner(strings.NewReader(string(output)))
-	
+
 	var currentDevice string
-	var isInput bool
-	
+	var hasInput bool
+
 	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		
-		// Detect device names (lines ending with ":")
-		if strings.HasSuffix(line, ":") && !strings.Contains(line, "Input Source") && !strings.Contains(line, "Output Source") {
-			if strings.Contains(line, "Audio") || len(line) > 2 {
-				currentDevice = strings.TrimSuffix(line, ":")
-				isInput = false
-			}
-		}
-		
-		// Check if device has input capabilities
-		if strings.Contains(line, "Input Source:") || strings.Contains(line, "Input Channels:") {
-			isInput = true
-		}
-		
-		// Add device when we've determined it's an input device
-		if isInput && currentDevice != "" && !strings.Contains(currentDevice, "Audio") {
-			// Avoid duplicates
-			found := false
-			for _, m := range mics {
-				if m.Name == currentDevice {
-					found = true
-					break
+		line := scanner.Text()
+		trimmed := strings.TrimSpace(line)
+
+		// Detect device names: lines with 8 spaces indent ending with ":"
+		// (not property lines which have 10+ spaces)
+		if strings.HasPrefix(line, "        ") && !strings.HasPrefix(line, "          ") &&
+			strings.HasSuffix(trimmed, ":") &&
+			!strings.Contains(trimmed, "Devices:") {
+			// Save previous device if it had input
+			if hasInput && currentDevice != "" {
+				found := false
+				for _, m := range mics {
+					if m.Name == currentDevice {
+						found = true
+						break
+					}
+				}
+				if !found {
+					mics = append(mics, Microphone{
+						ID:   currentDevice,
+						Name: currentDevice,
+					})
 				}
 			}
-			if !found {
-				mics = append(mics, Microphone{
-					ID:   currentDevice,
-					Name: currentDevice,
-				})
+			currentDevice = strings.TrimSuffix(trimmed, ":")
+			hasInput = false
+		}
+
+		// Check if device has input capabilities
+		if strings.Contains(trimmed, "Input Channels:") || strings.Contains(trimmed, "Input Source:") {
+			hasInput = true
+		}
+	}
+
+	// Don't forget the last device
+	if hasInput && currentDevice != "" {
+		found := false
+		for _, m := range mics {
+			if m.Name == currentDevice {
+				found = true
+				break
 			}
-			isInput = false
+		}
+		if !found {
+			mics = append(mics, Microphone{
+				ID:   currentDevice,
+				Name: currentDevice,
+			})
 		}
 	}
 
